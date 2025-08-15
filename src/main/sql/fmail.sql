@@ -1,4 +1,5 @@
-USE Fmail;
+
+USE pedantic_taussig;
 CREATE TABLE fmails (
     id INT AUTO_INCREMENT PRIMARY KEY,
     origin_id INT NOT NULL,

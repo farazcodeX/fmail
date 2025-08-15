@@ -1,4 +1,4 @@
-USE Fmail;
+USE pedantic_taussig;
 CREATE TABLE users (
     id INT  AUTO_INCREMENT PRIMARY KEY ,
     name NVARCHAR(50) NOT NULL ,

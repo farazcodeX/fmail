@@ -1,4 +1,4 @@
-USE Fmail;
+USE pedantic_taussig;
 CREATE TABLE recipients (
     id INT AUTO_INCREMENT PRIMARY KEY ,
     recipients_id INT NOT NULL ,

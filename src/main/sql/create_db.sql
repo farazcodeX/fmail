@@ -1,1 +1,1 @@
-CREATE DATABASE Fmail;
+CREATE DATABASE pedantic_taussig;

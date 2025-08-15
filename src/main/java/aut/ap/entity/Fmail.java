@@ -39,9 +39,10 @@ public class Fmail {
         this.subject = subject;
         this.body = body;
         this.date = date;
+        code = generateFmailCode();
     }
 
-    private String generateRandomCode() {
+    private String generateFmailCode() {
         String characters = "abcdefghijklmnopqrstuvwxyz0123456789";
         Random random = new Random();
         StringBuilder sb = new StringBuilder(6);
@@ -56,6 +57,7 @@ public class Fmail {
     public String getSubject() {return subject;}
     public String getBody() {return body;}
     public LocalDateTime getDate() {return date;}
+    public String getCode() {return code;}
 
     public void setOrigin(User origin) {
         this.origin = origin;
@@ -72,6 +74,21 @@ public class Fmail {
 
     @Override
     public String toString() {
-        return origin != null ? origin.getFmail() : "unknown user " + " -- " + subject + " -- " + "("+code+")";
+
+        String sender = "unknown user";
+        try {
+            if (origin != null && origin.getFmail() != null) {
+                sender = origin.getFmail();
+            }
+        } catch (org.hibernate.LazyInitializationException e) {
+
+        }
+        String safeSubject = subject != null ? subject : "(no subject)";
+        String safeCode = code != null ? code : "(no code)";
+
+        String safeDate = date != null ? date.toString() : "(no date)";
+
+        return String.format("[%s] %s -- %s (%s)", safeCode, sender, safeSubject, safeDate);
     }
+
 }
