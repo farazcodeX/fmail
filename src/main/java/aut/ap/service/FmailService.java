@@ -30,8 +30,13 @@ public class FmailService {
                 );
 
         System.out.println("Unread Fmails: ");
+        if(list.isEmpty()) {
+            System.out.println("you have sent something");
+            return;
+        }
         for (Fmail fmail : list) {
             System.out.println(" |(*) " + fmail.toString());
+            System.out.println(" --- --- --- --- ---");
         }
 
         while (true) {
@@ -54,6 +59,7 @@ public class FmailService {
 
 
     public static void showAllFmails(User user) {
+        boolean noFmails = false;
         SingletonSessionFactory.get().inTransaction(session -> {
             List<Fmail> list = session.createNativeQuery(
                             "SELECT f.* " +
@@ -66,9 +72,15 @@ public class FmailService {
                     .setParameter("userId", user.getId())
                     .getResultList();
 
+            if (list.isEmpty()) {
+                System.out.println("No fmails found.");
+                return;
+            }
+
             System.out.println("All fmails: ");
             for (Fmail fmail : list) {
                 System.out.println(" | " + fmail.toString());
+                System.out.println(" --- --- --- --- --- --- ---");
             }
 
 
