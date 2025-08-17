@@ -13,32 +13,33 @@ public class FmailService {
     static Scanner scanner = new Scanner(System.in);
 
     public static void showUnreadFmails(User user) {
-        List<Fmail> list = SingletonSessionFactory.get()
-                .fromTransaction(session ->
-                        session.createNativeQuery(
-                                        "SELECT f.* " +
-                                                "FROM recipients r " +
-                                                "JOIN fmails f ON r.fmail_id = f.id " +
-                                                "JOIN users u ON f.origin_id = u.id " +
-                                                "WHERE r.recipients_id = :userId " +
-                                                "AND r.is_read = false " +
-                                                "ORDER BY f.date DESC",
-                                        Fmail.class
-                                )
-                                .setParameter("userId", user.getId())
-                                .getResultList()
-                );
+        boolean noFmails = false;
+        SingletonSessionFactory.get().inTransaction(session -> {
+            List<Fmail> list = session.createNativeQuery(
+                            "SELECT f.* " +
+                                    "FROM recipients r " +
+                                    "JOIN fmails f ON r.fmail_id = f.id " +
+                                    "WHERE r.recipients_id = :userId " +
+                                    "AND r.is_read = false " +
+                                    "ORDER BY f.date DESC",
+                            Fmail.class
+                    )
+                    .setParameter("userId", user.getId())
+                    .getResultList();
 
-        System.out.println("Unread Fmails: ");
-        if(list.isEmpty()) {
-            System.out.println("you have sent something");
-            return;
-        }
-        for (Fmail fmail : list) {
-            System.out.println(" |(*) " + fmail.toString());
-            System.out.println(" --- --- --- --- ---");
-        }
+            if (list.isEmpty()) {
+                System.out.println("no Fmails");
+                return;
+            }
 
+            System.out.println("Unread fmails: ");
+            for (Fmail fmail : list) {
+                System.out.println(" |(*) " + fmail.toString());
+                System.out.println(" --- --- --- --- --- --- ---");
+            }
+
+
+        });
         while (true) {
             System.out.println("[S]ee Fmail / [B]ack");
             String choice = scanner.nextLine().toLowerCase();
@@ -53,6 +54,7 @@ public class FmailService {
 
             }
         }
+
 
     }
 
@@ -73,7 +75,7 @@ public class FmailService {
                     .getResultList();
 
             if (list.isEmpty()) {
-                System.out.println("No fmails found.");
+                System.out.println("no Fmails");
                 return;
             }
 
@@ -102,6 +104,9 @@ public class FmailService {
 
 
     }
+
+
+
 
 
     public static void showSentFmails(User user) {
@@ -135,51 +140,20 @@ public class FmailService {
     }
 
     public static void showFmailByCode(String fmailCode, User user) {
-        Fmail fmail = SingletonSessionFactory.get().fromTransaction(session ->
-                session.createNativeQuery("""
-                                    SELECT f.*
-                                    FROM fmails f
-                                    WHERE f.code = :code
-                                    AND (
-                                        f.origin_id = :userId
-                                        OR EXISTS (
-                                            SELECT 1
-                                            FROM recipients r
-                                            WHERE r.fmail_id = f.id
-                                            AND r.recipients_id = :userId
-                                        )
-                                    )
-                                """, Fmail.class)
-                        .setParameter("code", fmailCode)
-                        .setParameter("userId", user.getId())
-                        .uniqueResult()
-
-        );
-
-        if (fmail == null) {
-            System.out.println("You cannot read this email.");
+        Fmail fmail = getFmailByCode(fmailCode, user);
+        if(fmail == null) {
+            System.out.println("Fmail code : " + fmailCode + " is not available for you");
             return;
         }
-
-        List<String> recipients = SingletonSessionFactory.get().fromTransaction(session ->
-                session.createNativeQuery("""
-                                    SELECT u.fmail
-                                    FROM recipients r
-                                    JOIN users u ON r.recipients_id = u.id
-                                    WHERE r.fmail_id = :fmailId
-                                """, String.class)
-                        .setParameter("fmailId", fmail.getId())
-                        .getResultList()
-
-        );
-
         System.out.println(" --- Fmail ---");
         System.out.println("Code: " + fmail.getCode());
-        System.out.println("Recipient(s): " + String.join(", ", recipients));
+        System.out.println("From: " + fmail.getOrigin().getFmail());
         System.out.println("Subject: " + fmail.getSubject());
         System.out.println("Date: " + fmail.getDate().toLocalDate());
         System.out.println();
         System.out.println(fmail.getBody());
+
+
 
         seenFmail(fmail, user);
 
@@ -196,11 +170,11 @@ public class FmailService {
         SingletonSessionFactory.get().inTransaction(session -> {
             Fmail fmail = new Fmail(origin, subject, body, LocalDateTime.now());
             session.persist(fmail);
-            System.out.println(" --- fmail sent successfully . code : " + fmail.getCode() + " ---");
+            System.out.println(" --- fmail sent successfully . code : [" + fmail.getCode() + "] ---");
             recipients.stream().forEach(user -> {
                 Recipient recipient = new Recipient(user, fmail);
                 session.persist(recipient);
-                System.out.println(" | sent to  : " + recipient.getFmail() + " successfully ");
+                System.out.println(" | sent to  : " + user.getFmail() + " successfully ");
             });
         });
     }
@@ -241,7 +215,7 @@ public class FmailService {
             if (updated > 0) {
                 System.out.println("Fmail marked as seen.");
             } else {
-                System.out.println("No matching recipient found or already seen.");
+
             }
 
             return null;

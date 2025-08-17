@@ -2,6 +2,7 @@ package aut.ap.frameworks;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 public class SingletonSessionFactory {
+
     private static SessionFactory sessionFactory = null;
     public static SessionFactory get() {
         if (sessionFactory == null) {

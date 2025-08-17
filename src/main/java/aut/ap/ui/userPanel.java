@@ -9,6 +9,7 @@ import java.util.Scanner;
 
 public class userPanel {
     static Scanner scanner = new Scanner(System.in);
+
     public static void loginPage() {
         Scanner scanner = new Scanner(System.in);
         String choice;
@@ -29,6 +30,9 @@ public class userPanel {
             if(choice.equals("e")) {
                 System.out.println("---- Thanks for using Fmail -----");
                 System.exit(69);
+            }
+            else {
+                System.out.println("unknown option");
             }
         }
 
